@@ -16,8 +16,16 @@ from typing import Dict, List, Tuple
 DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven"]
 LOCKED_DAY_INDEX = 2  # Mercredi
 GROUPS = ["G1", "G2", "G3", "G4"]
-NB_PERIODE_JOUR = 5  # Nombre de fois ou le bloc GROUPS se repete dans la journee
-DECALAGE_COPIE_JOURS = 1  # Decalage en jours pour la copie des periodes (hors mercredi)
+NB_PERIODE_JOUR = 3  # Nombre de fois ou le bloc GROUPS se repete dans la journee
+
+# Parametrage de la copie (touche C)
+COPY_SOURCE_GROUP = "G1"
+COPY_SOURCE_DAY_INDEX = 0  # Lundi
+COPY_TARGETS = [
+    ("G2", 1),  # Mardi
+    ("G3", 3),  # Jeudi
+    ("G4", 4),  # Vendredi
+]
 
 ATELIERS_CSV = "atelier.csv"
 PLANNING_CSV = "planning.csv"
@@ -127,25 +135,24 @@ def rotate_week(planning: Dict[str, List[List[str]]], direction: int) -> None:
                 planning[g][p][i] = vals[k]
 
 
-def copy_first_period_with_shift(planning: Dict[str, List[List[str]]]) -> None:
-    if NB_PERIODE_JOUR <= 1:
+def copy_g1_to_g2_next_day(planning: Dict[str, List[List[str]]]) -> None:
+    if COPY_SOURCE_GROUP not in planning:
         return
-    day_idxs = [i for i in range(len(DAYS)) if i != LOCKED_DAY_INDEX]
-    if not day_idxs:
+    if not (0 <= COPY_SOURCE_DAY_INDEX < len(DAYS)):
         return
-    for g in GROUPS:
-        source = planning[g][0]
-        base = [source[i] for i in day_idxs]
-        for p in range(1, NB_PERIODE_JOUR):
-            shift = (DECALAGE_COPIE_JOURS * p) % len(day_idxs)
-            shifted = base
-            if shift:
-                shifted = shifted[-shift:] + shifted[:-shift]
-            shifted_map = {day_idxs[i]: shifted[i] for i in range(len(day_idxs))}
-            for j in range(len(DAYS)):
-                if j == LOCKED_DAY_INDEX:
-                    continue
-                planning[g][p][j] = shifted_map[j]
+    valid_targets = [
+        (grp, day)
+        for grp, day in COPY_TARGETS
+        if grp in planning
+        and 0 <= day < len(DAYS)
+        and day != LOCKED_DAY_INDEX
+    ]
+    if not valid_targets:
+        return
+    for p in range(NB_PERIODE_JOUR):
+        src_val = planning[COPY_SOURCE_GROUP][p][COPY_SOURCE_DAY_INDEX]
+        for dest_group, dest_day in valid_targets:
+            planning[dest_group][p][dest_day] = src_val
 
 
 def atelier_label(ateliers_by_id: Dict[str, Atelier], atelier_id: str) -> str:
@@ -206,9 +213,9 @@ def color_name_to_curses(name: str) -> Tuple[int, int] | None:
     return fg, bg
 
 
-def export_pdf(path: str,
-               planning: Dict[str, List[List[str]]],
-               ateliers_by_id: Dict[str, Atelier]) -> None:
+def export_pdf(
+    path: str, planning: Dict[str, List[List[str]]], ateliers_by_id: Dict[str, Atelier]
+) -> None:
     def pdf_color_from_name(name: str) -> colors.Color | None:
         palette = {
             "noir": colors.Color(0.1, 0.1, 0.1),
@@ -242,7 +249,9 @@ def export_pdf(path: str,
     header_style.leading = 11
 
     data: List[List[Paragraph]] = []
-    data.append([Paragraph("Groupe", header_style)] + [Paragraph(d, header_style) for d in DAYS])
+    data.append(
+        [Paragraph("Groupe", header_style)] + [Paragraph(d, header_style) for d in DAYS]
+    )
     for p in range(NB_PERIODE_JOUR):
         for g in GROUPS:
             row_label = f"{g} Periode {p + 1}" if NB_PERIODE_JOUR > 1 else g
@@ -254,16 +263,25 @@ def export_pdf(path: str,
             data.append(row)
 
     page_size = landscape(A4)
-    doc = SimpleDocTemplate(path, pagesize=page_size, leftMargin=24, rightMargin=24, topMargin=24, bottomMargin=24)
+    doc = SimpleDocTemplate(
+        path,
+        pagesize=page_size,
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
     usable_width = page_size[0] - doc.leftMargin - doc.rightMargin
     col_width = usable_width / (len(DAYS) + 1)
     table = Table(data, colWidths=[col_width] * (len(DAYS) + 1), repeatRows=1)
 
-    table_style = TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
-    ])
+    table_style = TableStyle(
+        [
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
+        ]
+    )
 
     row_idx = 1
     for p in range(NB_PERIODE_JOUR):
@@ -280,7 +298,9 @@ def export_pdf(path: str,
                     continue
                 luminance = 0.299 * bg.red + 0.587 * bg.green + 0.114 * bg.blue
                 fg = colors.white if luminance < 0.55 else colors.black
-                table_style.add("BACKGROUND", (col_idx, row_idx), (col_idx, row_idx), bg)
+                table_style.add(
+                    "BACKGROUND", (col_idx, row_idx), (col_idx, row_idx), bg
+                )
                 table_style.add("TEXTCOLOR", (col_idx, row_idx), (col_idx, row_idx), fg)
             row_idx += 1
 
@@ -355,17 +375,19 @@ def pick_atelier(stdscr, ateliers: List[Atelier], current_id: str) -> str:
             return ""
 
 
-def draw(stdscr,
-         planning: Dict[str, List[List[str]]],
-         ateliers_by_id: Dict[str, Atelier],
-         sel: Tuple[int, int],
-         status: str):
+def draw(
+    stdscr,
+    planning: Dict[str, List[List[str]]],
+    ateliers_by_id: Dict[str, Atelier],
+    sel: Tuple[int, int],
+    status: str,
+):
     stdscr.erase()
     h, w = stdscr.getmaxyx()
 
     # En-tête
     header = "Agenda console (Lun–Ven) — Mercredi verrouillé"
-    help1 = "Fleches: bouger | Entree: choisir atelier | N: reinitialiser | S: sauver | R: recharger | P: pdf | C: copier periode 1 (decalage) | <: rot gauche | >: rot droite | Q: quitter"
+    help1 = "Fleches: bouger | Entree: choisir atelier | N: reinitialiser | S: sauver | R: recharger | P: pdf | C: copier Lun G1 -> Mar/G2, Jeu/G3, Ven/G4 | <: rot gauche | >: rot droite | Q: quitter"
     stdscr.addstr(0, 2, header[: w - 4], curses.A_BOLD)
     stdscr.addstr(1, 2, help1[: w - 4])
 
@@ -374,11 +396,10 @@ def draw(stdscr,
     left_x = 2
     max_label_len = max(
         (len(atelier_label(ateliers_by_id, a.id)) for a in ateliers_by_id.values()),
-        default=0
+        default=0,
     )
     cell_w = max(
-        12,
-        min(max(24, max_label_len + 2), (w - left_x - 6) // (len(DAYS) + 1))
+        12, min(max(24, max_label_len + 2), (w - left_x - 6) // (len(DAYS) + 1))
     )
 
     def wrap_label(label: str, width: int) -> List[str]:
@@ -401,7 +422,9 @@ def draw(stdscr,
     grid_h = sum(row_heights) + len(rows) + 4 + separator_count
 
     if top_y + grid_h + 4 > h or left_x + grid_w > w:
-        stdscr.addstr(top_y, 2, "Fenêtre trop petite. Agrandis le terminal.", curses.A_BOLD)
+        stdscr.addstr(
+            top_y, 2, "Fenêtre trop petite. Agrandis le terminal.", curses.A_BOLD
+        )
         stdscr.refresh()
         return
 
@@ -490,14 +513,14 @@ def draw(stdscr,
                 y + line_idx,
                 left_x + 2,
                 group_text.ljust(cell_w - 3),
-                color_attr | curses.A_BOLD
+                color_attr | curses.A_BOLD,
             )
 
             for j in range(len(DAYS)):
                 x = left_x + (j + 1) * cell_w
-                locked = (j == LOCKED_DAY_INDEX)
+                locked = j == LOCKED_DAY_INDEX
                 locked_attr = curses.color_pair(5) if (use_color and locked) else 0
-                is_sel = (row_idx == sel_i and j == sel_j)
+                is_sel = row_idx == sel_i and j == sel_j
                 cell_lines, cell_attr = day_cells[j]
                 base_attr = cell_attr
                 if locked:
@@ -619,8 +642,8 @@ def main(stdscr):
             rotate_week(planning, 1)
             status = "Rotated right."
         elif ch in (ord("c"), ord("C")):
-            copy_first_period_with_shift(planning)
-            status = "Copied period 1 to others with shift."
+            copy_g1_to_g2_next_day(planning)
+            status = "Copie Lun G1 vers Mar/G2, Jeu/G3, Ven/G4."
 
 
 if __name__ == "__main__":
