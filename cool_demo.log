@@ -1,0 +1,62 @@
+2026-01-11 23:47:11,787 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-11 23:47:11,787 - cool_demo_logger - DEBUG - This is a debug message
+2026-01-11 23:47:11,788 - cool_demo_logger - INFO - This is an info message
+2026-01-11 23:47:11,788 - cool_demo_logger - WARNING - This is a warning message
+2026-01-11 23:47:11,788 - cool_demo_logger - ERROR - This is an error message
+2026-01-11 23:47:11,788 - cool_demo_logger - CRITICAL - This is a critical message
+2026-01-11 23:47:11,788 - cool_demo_logger - DEBUG - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-11 23:47:46,639 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-11 23:47:46,639 - cool_demo_logger - DEBUG - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-11 23:48:39,161 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-11 23:49:32,573 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-11 23:49:32,574 - cool_demo_logger - DEBUG - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-11 23:50:00,054 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-11 23:50:00,054 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:08:57,416 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:08:57,417 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:09:27,835 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:09:27,836 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:09:32,933 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:09:32,933 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:09:57,389 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:09:57,389 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:10:18,113 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:10:18,113 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:10:48,925 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:10:48,925 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:11:37,590 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:11:37,590 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 0: apple
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 1: banana
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 2: cherry
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 3: date
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 4: elderberry
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 5: fig
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 6: grape
+2026-01-12 00:11:37,591 - cool_demo_logger - WARNING - Fruit 7: honeydew
+2026-01-12 00:11:37,592 - cool_demo_logger - WARNING - Fruit 8: kiwi
+2026-01-12 00:11:37,592 - cool_demo_logger - WARNING - Fruit 9: lemon
+2026-01-12 00:11:55,311 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:11:55,311 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 0: apple
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 1: banana
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 2: cherry
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 3: date
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 4: elderberry
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 5: fig
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 6: grape
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 7: honeydew
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 8: kiwi
+2026-01-12 00:11:55,311 - cool_demo_logger - DEBUG - Fruit 9: lemon
+2026-01-12 00:12:08,191 - cool_demo_logger - INFO - Logging setup complete. Ready to log messages.
+2026-01-12 00:12:08,191 - cool_demo_logger - WARNING - Pair modulo 5 of (12, 27) is: (2, 2)
+2026-01-12 00:12:08,191 - cool_demo_logger - ERROR - Fruit 0: apple
+2026-01-12 00:12:08,191 - cool_demo_logger - ERROR - Fruit 1: banana
+2026-01-12 00:12:08,192 - cool_demo_logger - ERROR - Fruit 2: cherry
+2026-01-12 00:12:08,192 - cool_demo_logger - ERROR - Fruit 3: date
+2026-01-12 00:12:08,192 - cool_demo_logger - ERROR - Fruit 4: elderberry
+2026-01-12 00:12:08,192 - cool_demo_logger - ERROR - Fruit 5: fig
+2026-01-12 00:12:08,192 - cool_demo_logger - ERROR - Fruit 6: grape
+2026-01-12 00:12:08,192 - cool_demo_logger - ERROR - Fruit 7: honeydew
+2026-01-12 00:12:08,193 - cool_demo_logger - ERROR - Fruit 8: kiwi
+2026-01-12 00:12:08,193 - cool_demo_logger - ERROR - Fruit 9: lemon
