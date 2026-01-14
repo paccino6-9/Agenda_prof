@@ -170,6 +170,39 @@ def copy_selection_over_workdays(
     return "Copie effectuée (+1 jour, groupe suivant, mercredi sauté)."
 
 
+def copy_all_over_workdays(planning: Dict[str, List[List[str]]], rows: List[Tuple[int, str]]) -> str:
+    """
+    Applique la logique de copie sur chaque valeur unique rencontrée (hors mercredi),
+    en conservant le même décalage (+1 jour, groupe suivant, mercredi sauté).
+    """
+    working_days = [d for d in range(len(DAYS)) if d != LOCKED_DAY_INDEX]
+    first_occurrence_by_value: Dict[str, Tuple[int, int]] = {}
+    for i, (p, g) in enumerate(rows):
+        grp_rows = planning.get(g)
+        if not grp_rows or not (0 <= p < len(grp_rows)):
+            continue
+        row_vals = grp_rows[p]
+        for day in working_days:
+            if not (0 <= day < len(row_vals)):
+                continue
+            val = row_vals[day]
+            if val and val not in first_occurrence_by_value:
+                first_occurrence_by_value[val] = (i, day)
+
+    if not first_occurrence_by_value:
+        return "Aucune cellule non vide à copier."
+
+    applied = 0
+    total = len(first_occurrence_by_value)
+    # Snapshot des positions à traiter pour ne pas réutiliser les valeurs fraîchement copiées
+    for sel_i, sel_j in list(first_occurrence_by_value.values()):
+        msg = copy_selection_over_workdays(planning, rows, sel_i, sel_j)
+        if msg.startswith("Copie effectuée"):
+            applied += 1
+
+    return f"Copie en masse: {applied}/{total} valeurs traitées."
+
+
 def atelier_label(ateliers_by_id: Dict[str, Atelier], atelier_id: str) -> str:
     if not atelier_id:
         return ""
@@ -407,7 +440,7 @@ def draw(
 
     # En-tête
     header = "Agenda console (Lun–Ven) — Mercredi verrouillé"
-    help1 = "Fleches: bouger | Entree: choisir atelier | N: reinitialiser | S: sauver | R: recharger | P: pdf | C: copier cellule selectionnee (+1 jour, groupe suivant, mercredi saute) | <: rot gauche | >: rot droite | Q: quitter"
+    help1 = "Fleches: bouger | Entree: choisir atelier | N: reinitialiser | S: sauver | R: recharger | P: pdf | C: copier cellule selectionnee (+1 jour, groupe suivant, mercredi saute) | V: copier 1 cellule par jour (meme logique) | <: rot gauche | >: rot droite | Q: quitter"
     stdscr.addstr(0, 2, header[: w - 4], curses.A_BOLD)
     stdscr.addstr(1, 2, help1[: w - 4])
 
@@ -664,6 +697,8 @@ def main(stdscr):
             status = "Rotated right."
         elif ch in (ord("c"), ord("C")):
             status = copy_selection_over_workdays(planning, rows, sel_i, sel_j)
+        elif ch in (ord("v"), ord("V")):
+            status = copy_all_over_workdays(planning, rows)
 
 
 if __name__ == "__main__":

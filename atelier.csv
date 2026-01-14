@@ -1,6 +1,5 @@
-id,nom,couleur,designation,test
-A1,Batterie,bleu,Rythme & coordination,c'est beau
-A2,Guitare,violet ,Accords & accompagnement et putain de diou,xfdg
-A3,Piano,jaune,Initiation clavier,xfg
-A4,Chant,violet,Technique vocale,dfg
-A5,MAO,violet,Beatmaking & arrangement,xfg
+id,nom,couleur,designation,test,très long
+A4,Chant,vert,Technique vocale,dfg,oh oui
+A2,Guitare,violet ,Accords & accompagnement et putain de diou,xfdg,
+A3,Piano,jaune,Initiation clavier,xfg,
+A5,MAO,bleu,Beatmaking & arrangement,xfg,
