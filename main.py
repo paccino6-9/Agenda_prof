@@ -18,15 +18,6 @@ LOCKED_DAY_INDEX = 2  # Mercredi
 GROUPS = ["G1", "G2", "G3", "G4"]
 NB_PERIODE_JOUR = 3  # Nombre de fois ou le bloc GROUPS se repete dans la journee
 
-# Parametrage de la copie (touche C)
-COPY_SOURCE_GROUP = "G1"
-COPY_SOURCE_DAY_INDEX = 0  # Lundi
-COPY_TARGETS = [
-    ("G2", 1),  # Mardi
-    ("G3", 3),  # Jeudi
-    ("G4", 4),  # Vendredi
-]
-
 ATELIERS_CSV = "atelier.csv"
 PLANNING_CSV = "planning.csv"
 
@@ -135,24 +126,48 @@ def rotate_week(planning: Dict[str, List[List[str]]], direction: int) -> None:
                 planning[g][p][i] = vals[k]
 
 
-def copy_g1_to_g2_next_day(planning: Dict[str, List[List[str]]]) -> None:
-    if COPY_SOURCE_GROUP not in planning:
-        return
-    if not (0 <= COPY_SOURCE_DAY_INDEX < len(DAYS)):
-        return
-    valid_targets = [
-        (grp, day)
-        for grp, day in COPY_TARGETS
-        if grp in planning
-        and 0 <= day < len(DAYS)
-        and day != LOCKED_DAY_INDEX
-    ]
-    if not valid_targets:
-        return
-    for p in range(NB_PERIODE_JOUR):
-        src_val = planning[COPY_SOURCE_GROUP][p][COPY_SOURCE_DAY_INDEX]
-        for dest_group, dest_day in valid_targets:
-            planning[dest_group][p][dest_day] = src_val
+def copy_selection_over_workdays(
+    planning: Dict[str, List[List[str]]],
+    rows: List[Tuple[int, str]],
+    sel_i: int,
+    sel_j: int,
+) -> str:
+    """
+    Copie la cellule sélectionnée vers les autres jours ouvrés (Lun, Mar, Jeu, Ven),
+    en décalant d'un jour et en avançant dans GROUPS à chaque copie. Mercredi est ignoré.
+    """
+    if not (0 <= sel_i < len(rows)) or not (0 <= sel_j < len(DAYS)):
+        return "Sélection invalide."
+    if sel_j == LOCKED_DAY_INDEX:
+        return "Mercredi est non utilisé, aucune copie effectuée."
+
+    src_p, src_g = rows[sel_i]
+    if src_g not in planning or not (0 <= src_p < len(planning[src_g])):
+        return "Sélection hors planning."
+
+    src_val = planning[src_g][src_p][sel_j]
+    if not src_val:
+        return "Cellule vide, rien à copier."
+
+    working_days = [d for d in range(len(DAYS)) if d != LOCKED_DAY_INDEX]
+    if sel_j not in working_days:
+        return "Jour non utilisable pour la copie."
+    try:
+        src_group_idx = GROUPS.index(src_g)
+    except ValueError:
+        return "Groupe inconnu pour la copie."
+
+    start_idx = working_days.index(sel_j)
+    for step in range(1, len(working_days)):
+        dest_day = working_days[(start_idx + step) % len(working_days)]
+        dest_group = GROUPS[(src_group_idx + step) % len(GROUPS)]
+        if dest_group not in planning:
+            continue
+        if not (0 <= src_p < len(planning[dest_group])):
+            continue
+        planning[dest_group][src_p][dest_day] = src_val
+
+    return "Copie effectuée (+1 jour, groupe suivant, mercredi sauté)."
 
 
 def atelier_label(ateliers_by_id: Dict[str, Atelier], atelier_id: str) -> str:
@@ -257,6 +272,9 @@ def export_pdf(
             row_label = f"{g} Periode {p + 1}" if NB_PERIODE_JOUR > 1 else g
             row: List[Paragraph] = [Paragraph(row_label, cell_style)]
             for j in range(len(DAYS)):
+                if j == LOCKED_DAY_INDEX:
+                    row.append(Paragraph("", cell_style))
+                    continue
                 atelier_id = planning[g][p][j]
                 label = atelier_label(ateliers_by_id, atelier_id)
                 row.append(Paragraph(label or "", cell_style))
@@ -287,6 +305,8 @@ def export_pdf(
     for p in range(NB_PERIODE_JOUR):
         for g in GROUPS:
             for col_idx, _ in enumerate(DAYS, start=1):
+                if col_idx - 1 == LOCKED_DAY_INDEX:
+                    continue
                 atelier_id = planning[g][p][col_idx - 1]
                 if not atelier_id:
                     continue
@@ -387,7 +407,7 @@ def draw(
 
     # En-tête
     header = "Agenda console (Lun–Ven) — Mercredi verrouillé"
-    help1 = "Fleches: bouger | Entree: choisir atelier | N: reinitialiser | S: sauver | R: recharger | P: pdf | C: copier Lun G1 -> Mar/G2, Jeu/G3, Ven/G4 | <: rot gauche | >: rot droite | Q: quitter"
+    help1 = "Fleches: bouger | Entree: choisir atelier | N: reinitialiser | S: sauver | R: recharger | P: pdf | C: copier cellule selectionnee (+1 jour, groupe suivant, mercredi saute) | <: rot gauche | >: rot droite | Q: quitter"
     stdscr.addstr(0, 2, header[: w - 4], curses.A_BOLD)
     stdscr.addstr(1, 2, help1[: w - 4])
 
@@ -413,7 +433,7 @@ def draw(
         max_lines = 1
         for j in range(len(DAYS)):
             atelier_id = planning[g][p][j]
-            label = atelier_label(ateliers_by_id, atelier_id)
+            label = "" if j == LOCKED_DAY_INDEX else atelier_label(ateliers_by_id, atelier_id)
             max_lines = max(max_lines, len(wrap_label(label, cell_w - 3)))
         row_heights.append(max_lines)
 
@@ -495,10 +515,10 @@ def draw(
         day_cells: List[Tuple[List[str], int]] = []
         for j in range(len(DAYS)):
             atelier_id = planning[g][p][j]
-            label = atelier_label(ateliers_by_id, atelier_id)
+            label = "" if j == LOCKED_DAY_INDEX else atelier_label(ateliers_by_id, atelier_id)
             lines = wrap_label(label, cell_w - 3)
             cell_attr = color_attr
-            if use_color and atelier_id:
+            if use_color and atelier_id and j != LOCKED_DAY_INDEX:
                 a = ateliers_by_id.get(atelier_id)
                 if a and a.couleur:
                     key = normalize_color_name(a.couleur)
@@ -546,27 +566,28 @@ def draw(
     # Panneau détails atelier sélectionné
     sel_p, sel_g = rows[sel_i]
     aid = planning[sel_g][sel_p][sel_j]
-    a = ateliers_by_id.get(aid)
+    a = ateliers_by_id.get(aid) if sel_j != LOCKED_DAY_INDEX else None
     details_y = top_y + grid_h + 1
     stdscr.addstr(details_y, 2, "Détails:", curses.A_BOLD)
-    if a:
-        label_prefix = f"{sel_g} Periode {sel_p + 1} - " if NB_PERIODE_JOUR > 1 else ""
-        detail_lines = [f"{label_prefix}{a.id} - {a.nom}"]
-        if a.designation:
-            detail_lines.append(a.designation)
-        if a.couleur:
-            detail_lines.append(f"couleur: {a.couleur}")
-        for k, v in a.extras.items():
-            detail_lines.append(f"{k}: {v}")
-        for i, line in enumerate(detail_lines):
-            y_line = details_y + 1 + i
-            if y_line >= h - 1:
-                break
-            stdscr.addstr(y_line, 4, line[: max(0, w - 5)])
-    else:
-        if details_y + 1 < h - 1:
-            msg = "(vide)" if not aid else f"Atelier inconnu: {aid}"
-            stdscr.addstr(details_y + 1, 4, msg[: max(0, w - 5)])
+    if sel_j != LOCKED_DAY_INDEX:
+        if a:
+            label_prefix = f"{sel_g} Periode {sel_p + 1} - " if NB_PERIODE_JOUR > 1 else ""
+            detail_lines = [f"{label_prefix}{a.id} - {a.nom}"]
+            if a.designation:
+                detail_lines.append(a.designation)
+            if a.couleur:
+                detail_lines.append(f"couleur: {a.couleur}")
+            for k, v in a.extras.items():
+                detail_lines.append(f"{k}: {v}")
+            for i, line in enumerate(detail_lines):
+                y_line = details_y + 1 + i
+                if y_line >= h - 1:
+                    break
+                stdscr.addstr(y_line, 4, line[: max(0, w - 5)])
+        else:
+            if details_y + 1 < h - 1:
+                msg = "(vide)" if not aid else f"Atelier inconnu: {aid}"
+                stdscr.addstr(details_y + 1, 4, msg[: max(0, w - 5)])
 
     # Status
     stdscr.addstr(h - 2, 2, (status or "").ljust(w - 4)[: w - 4], curses.A_DIM)
@@ -642,8 +663,7 @@ def main(stdscr):
             rotate_week(planning, 1)
             status = "Rotated right."
         elif ch in (ord("c"), ord("C")):
-            copy_g1_to_g2_next_day(planning)
-            status = "Copie Lun G1 vers Mar/G2, Jeu/G3, Ven/G4."
+            status = copy_selection_over_workdays(planning, rows, sel_i, sel_j)
 
 
 if __name__ == "__main__":
